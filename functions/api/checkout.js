@@ -3,8 +3,9 @@ const CATALOG = {
   "vanilla-hearth": ["Vanilla Hearth Candle", 1800, true],
   "lavender-linen": ["Lavender Linen Candle", 1800, true],
   "farm-eggs": ["Farm-Fresh Chicken Eggs (dozen)", 500, false],
-  "fertile-hatching-eggs": ["Fertile Hatching Eggs", 2400, true],
-  "seasonal-box": ["Valley Ridge Gift Box", 2800, true]
+  "fertile-hatching-eggs": ["Fertile Hatching Eggs", 2400, true],  "seasonal-box": ["Valley Ridge Gift Box", 2800, true],
+  "honey-8oz": ["Honey (8 oz jar)", 1200, false],
+  "patch-2in": ["Patch (2 inch)", 500, false]
 };
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
@@ -25,7 +26,7 @@ export async function onRequestPost({ request, env }) {
   for (const [id, quantity] of entries) {
     const item = CATALOG[id];
     if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > 25) return json({ error: "Please refresh your cart and try again." }, 400);
-    if (fulfillment === "shipping" && !item[2]) return json({ error: "Fresh eating eggs are available for pickup only." }, 400);
+    if (fulfillment === "shipping" && !item[2]) return json({ error: "One or more items in your cart are available for pickup only." }, 400);
     count += quantity;
     line_items.push({ name: item[0], quantity: String(quantity), base_price_money: { amount: item[1], currency: "USD" } });
   }
