@@ -12,7 +12,7 @@ The starter story is in `dist/about/index.html`. Replace the three paragraphs in
 
 ## Square checkout
 
-The cart and checkout preview are functional. The final button intentionally shows a setup message until the business's Square credentials and production checkout flow are connected. Never place private Square credentials directly in these public files.
+The cart posts to `functions/api/checkout.js`, which validates items, quantities, prices, and pickup-only restrictions before creating a Square-hosted payment link. In Cloudflare Pages set production encrypted secrets `SQUARE_ACCESS_TOKEN` and `SQUARE_LOCATION_ID`. Set `SHIPPING_FEE_CENTS` (integer USD cents, for example `800` for $8) to enable shipping checkout; pickup works without it. Set up tax rules and review the actual payment page before accepting orders. Never put credentials in public files or GitHub. Verify completed orders and payments in Square Dashboard; a redirect alone is not proof of payment. Keep `functions` at repository root and Pages build output at `dist`.
 
 ## Stock-photo sources
 
