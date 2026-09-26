@@ -16,7 +16,7 @@
   function product(id) { return products.find((item) => item.id === id); }
   function cartCount(cart = readCart()) { return Object.values(cart).reduce((sum, qty) => sum + qty, 0); }
   function cartItems(cart = readCart()) {
-    return Object.entries(cart).map(([id, quantity]) => ({ ...product(id), quantity })).filter((item) => item.name);
+    return Object.entries(cart).map(([id, quantity]) => ({ ...product(id), quantity })).filter((item) => item.name && item.price != null);
   }
 
   function updateCartCount() {
@@ -28,10 +28,11 @@
   }
 
   function addToCart(id) {
+    const item = product(id);
+    if (!item || item.price == null) return;
     const cart = readCart();
     cart[id] = (cart[id] || 0) + 1;
     saveCart(cart);
-    const item = product(id);
     announce(`${item.name} added to your cart.`);
     document.querySelector("[data-cart-button]")?.classList.add("cart-bump");
     setTimeout(() => document.querySelector("[data-cart-button]")?.classList.remove("cart-bump"), 300);
@@ -51,15 +52,15 @@
 
   function productCard(item) {
     return `<article class="product-card">
-      <div class="product-photo"><img src="${item.image}" alt="${item.alt}" loading="lazy"></div>
+      <div class="product-photo">${item.image ? `<img src="${item.image}" alt="${item.alt}" loading="lazy">` : `<div class="product-placeholder" role="img" aria-label="Patch photo coming soon">Patch photo coming soon</div>`}</div>
       <div class="product-info">
         <p class="eyebrow">${item.category}</p>
         <h3>${item.name}</h3>
         <p class="product-description">${item.description}</p>
         <div class="fulfillment">${item.fulfillment}</div>
         <div class="product-action">
-          <strong>${money.format(item.price)}</strong>
-          <button class="button button-small" data-add="${item.id}">Add to cart</button>
+          <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}</strong>
+          ${item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
         </div>
       </div>
     </article>`;
