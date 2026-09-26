@@ -67,5 +67,16 @@ window.VRF_PRODUCTS = [
     alt: "A peaceful small farm in warm evening light",
     description: "A rotating selection of small-batch farm favorites, ready for gifting.",
     fulfillment: "Pickup or shipping"
+  },
+  {
+    id: "patches",
+    name: "Patches",
+    category: "Patches",
+    price: null,
+    badge: "Coming soon",
+    image: null,
+    alt: "",
+    description: "Patch designs, size, and material details coming soon.",
+    fulfillment: "Pickup and shipping details coming soon"
   }
 ];
