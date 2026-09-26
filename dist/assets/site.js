@@ -52,7 +52,7 @@
 
   function productCard(item) {
     return `<article class="product-card">
-      <div class="product-photo">${item.image ? `<img src="${item.image}" alt="${item.alt}" loading="lazy">` : `<div class="product-placeholder" role="img" aria-label="Patch photo coming soon">Patch photo coming soon</div>`}</div>
+      <div class="product-photo">${item.image ? `<img src="${item.image}" alt="${item.alt}" loading="lazy">` : `<div class="product-placeholder" role="img" aria-label="${item.name}">${item.name}</div>`}</div>
       <div class="product-info">
         <p class="eyebrow">${item.category}</p>
         <h3>${item.name}</h3>
@@ -89,7 +89,7 @@
     empty.hidden = true;
     content.hidden = false;
     list.innerHTML = items.map((item) => `<li class="checkout-item">
-      <img src="${item.image}" alt="">
+      ${item.image ? `<img src="${item.image}" alt="">` : `<span class="cart-item-icon" aria-hidden="true">${item.category}</span>`}
       <div><strong>${item.name}</strong><span>${money.format(item.price)} each</span></div>
       <div class="quantity" aria-label="Quantity for ${item.name}">
         <button data-qty="${item.id}" data-change="-1" aria-label="Remove one ${item.name}">−</button>
@@ -108,7 +108,7 @@
       if (pickupOnly && shipping.querySelector("input").checked) document.querySelector("#pickup").checked = true;
     }
     const note = document.querySelector("[data-fulfillment-note]");
-    if (note) note.textContent = pickupOnly ? "Your cart contains eating eggs, so this order is available for local pickup only. Fertile hatching eggs may be shipped when ordered separately." : "Choose local pickup or shipping. Fertile hatching eggs and candles may be shipped.";
+    if (note) note.textContent = pickupOnly ? "Your cart contains an item available for local pickup only. Order shippable items separately if you need delivery." : "Choose local pickup or shipping. Fertile hatching eggs and candles may be shipped.";
   }
 
   document.addEventListener("click", (event) => {
