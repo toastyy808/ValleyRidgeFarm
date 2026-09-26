@@ -129,3 +129,4 @@ fieldset.field { border: 0; padding: 0; }
   .checkout-item > strong:last-child { grid-column: 2 / -1; }
 }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
+.product-placeholder { aspect-ratio: 4/3; display: grid; place-items: center; padding: 1.5rem; text-align: center; color: var(--forest); font-weight: 700; letter-spacing: .04em; }
