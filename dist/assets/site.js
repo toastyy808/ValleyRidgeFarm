@@ -127,11 +127,30 @@
     }
   });
 
-  document.querySelector("[data-checkout-form]")?.addEventListener("submit", (event) => {
+  document.querySelector("[data-checkout-form]")?.addEventListener("submit", async (event) => {
     event.preventDefault();
     const message = document.querySelector("[data-checkout-message]");
-    message.hidden = false;
-    message.focus();
+    const form = event.currentTarget;
+    const button = form.querySelector('button[type="submit"]');
+    message.hidden = true;
+    button.disabled = true;
+    button.textContent = "Opening secure checkout…";
+    try {
+      const response = await fetch("/api/checkout", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cart: readCart(), fulfillment: form.elements.namedItem("fulfillment").value, email: form.elements.namedItem("email").value })
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(result.error || "Checkout is unavailable.");
+      if (!/^https:\/\/(?:sandbox\.)?(?:square\.link|checkout\.square\.site)\//.test(result.url)) throw new Error("Invalid checkout link.");
+      window.location.assign(result.url);
+    } catch (error) {
+      message.textContent = error.message || "Checkout is unavailable. Please try again.";
+      message.hidden = false;
+      message.focus();
+      button.disabled = false;
+      button.textContent = "Continue to secure Square checkout";
+    }
   });
 
   renderProducts();
