@@ -67,11 +67,34 @@
   }
 
   function renderProducts() {
+    const collections = {
+      farm: { name: "The Farm", categories: ["Fresh Eggs", "Honey", "Seasonal Goods"], description: "Fresh eggs, honey, and seasonal goods from our little corner of Central Arkansas." },
+      candles: { name: "Candles", categories: ["Candles"], description: "Find a favorite scent and bring a little warmth home. Available for pickup or shipping." },
+      patches: { name: "Patches", categories: ["Patches"], description: "Little details with plenty of personality. Browse our patches, available for local pickup." },
+      plushies: { name: "Plushies", categories: ["Plushies"], description: "Find a soft new friend. Browse our plushies, available for local pickup." }
+    };
+    const requested = new URLSearchParams(window.location.search).get("category");
+    const selected = Object.hasOwn(collections, requested) ? collections[requested] : null;
+    const heading = document.querySelector("[data-collection-title]");
+    if (heading) {
+      heading.textContent = selected ? selected.name : "All the good things.";
+      document.querySelector("[data-collection-description]").textContent = selected ? selected.description : "Explore the farm, find your favorite candle, or pick out a patch or plushie.";
+      document.title = `${selected ? selected.name : "Shop all"} | Valley Ridge Market`;
+      document.querySelectorAll("[data-category-link]").forEach((link) => {
+        if (link.dataset.categoryLink === (selected ? requested : "all")) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
+    }
     document.querySelectorAll("[data-products]").forEach((grid) => {
       const category = grid.dataset.products;
       const limit = Number(grid.dataset.limit || 99);
-      const list = products.filter((item) => !category || category === "all" || (category === "featured" ? item.featured : item.category === category)).slice(0, limit);
+      const list = products.filter((item) => {
+        if (grid.hasAttribute("data-collection-grid") && selected) return selected.categories.includes(item.category);
+        return !category || category === "all" || (category === "featured" ? item.featured : item.category === category);
+      }).slice(0, limit);
       grid.innerHTML = list.map(productCard).join("");
+      const count = document.querySelector("[data-product-count]");
+      if (count && grid.hasAttribute("data-collection-grid")) count.textContent = `${list.length} ${list.length === 1 ? "item" : "items"}`;
     });
   }
 
