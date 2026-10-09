@@ -210,3 +210,26 @@ fieldset.field { border: 0; padding: 0; }
 }
 @media (max-width: 350px) { .collection-grid { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .collection-card:hover { transform: none; } }
+
+/* Music lessons share the market's color palette and readable type. */
+.music-section { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, .8fr); gap: clamp(2rem, 5vw, 5rem); background: var(--forest-dark); color: #fff; padding: clamp(1.5rem, 4vw, 3.5rem); border-radius: 16px; margin-bottom: 3rem; scroll-margin-top: 2rem; align-items: center; }
+.music-copy .eyebrow { color: #f4cc76; }
+.music-copy h2 { font-weight: 400; font-size: clamp(2.25rem, 4.5vw, 3.75rem); margin-bottom: 1rem; }
+.music-copy p { max-width: 57ch; }
+.music-lead { font-size: 1.2rem; line-height: 1.5; }
+.music-instruments { padding-top: 1rem; border-top: 1px solid #ffffff40; margin-top: 1.5rem; }
+.music-plan { background: var(--cream); color: var(--ink); border-radius: 10px; padding: clamp(1.25rem, 3vw, 2.5rem); }
+.music-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: .65rem; margin: .75rem 0; }
+.music-price strong { font: 400 clamp(3.5rem, 5vw, 4.75rem)/1 Georgia, serif; color: var(--forest-dark); letter-spacing: -.04em; }
+.music-price span { font-size: 1rem; color: var(--muted); }
+.music-included { border-bottom: 1px solid var(--line); padding-bottom: 1.1rem; }
+.music-actions { display: grid; gap: .65rem; margin-top: 1.5rem; }
+.music-actions .button { min-height: 48px; text-align: center; }
+.music-phone { margin: 1rem 0 0; text-align: center; font-size: 1rem; }
+@media (max-width: 820px) { .music-section { grid-template-columns: 1fr; } }
+@media (max-width: 1000px) {
+  .desktop-nav { display: none; }
+  .menu-toggle { display: block; }
+  .mobile-nav.open { display: grid; gap: .75rem; padding: 0 1rem 1rem; }
+  .mobile-nav a { padding: .45rem 0; font-weight: 800; }
+}
