@@ -51,15 +51,15 @@
   }
 
   function productCard(item) {
-    return `<article class="product-card">
+    return `<article class="product-card${item.collection === "fall" ? " fall-product" : ""}">
       <div class="product-photo">${item.image ? `<img src="${item.image}" alt="${item.alt}" loading="lazy">` : `<div class="product-placeholder" role="img" aria-label="${item.name}">${item.name}</div>`}</div>
       <div class="product-info">
-        <p class="eyebrow">${item.category}</p>
+        <p class="eyebrow">${item.collection === "fall" ? "Fall Collection" : item.category}</p>
         <h3>${item.name}</h3>
         <p class="product-description">${item.description}</p>
         <div class="fulfillment">${item.fulfillment}</div>
         <div class="product-action">
-          <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}</strong>
+          <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}${item.unit ? `<span class="price-unit"> / ${item.unit}</span>` : ""}</strong>
           ${item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
         </div>
       </div>
@@ -73,23 +73,39 @@
       patches: { name: "Patches", categories: ["Patches"], description: "Little details with plenty of personality. Browse our patches, available for local pickup." },
       plushies: { name: "Plushies", categories: ["Plushies"], description: "Find a soft new friend. Browse our plushies, available for local pickup." }
     };
-    const requested = new URLSearchParams(window.location.search).get("category");
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("category");
     const selected = Object.hasOwn(collections, requested) ? collections[requested] : null;
+    const fallSelected = requested === "patches" && params.get("collection") === "fall";
     const heading = document.querySelector("[data-collection-title]");
     if (heading) {
-      heading.textContent = selected ? selected.name : "All the good things.";
-      document.querySelector("[data-collection-description]").textContent = selected ? selected.description : "Explore the farm, find your favorite candle, or pick out a patch or plushie.";
-      document.title = `${selected ? selected.name : "Shop all"} | Valley Ridge Market`;
+      heading.textContent = fallSelected ? "Fall Collection" : selected ? selected.name : "All the good things.";
+      document.querySelector("[data-collection-description]").textContent = fallSelected ? "Pumpkins, maple leaves, and acorns for a little autumn personality. Two matching 2 inch round iron-on patches for $3." : selected ? selected.description : "Explore the farm, find your favorite candle, or pick out a patch or plushie.";
+      document.title = `${fallSelected ? "Fall Collection · Patches" : selected ? selected.name : "Shop all"} | Valley Ridge Market`;
       document.querySelectorAll("[data-category-link]").forEach((link) => {
         if (link.dataset.categoryLink === (selected ? requested : "all")) link.setAttribute("aria-current", "page");
         else link.removeAttribute("aria-current");
       });
     }
+    const patchTabs = document.querySelector("[data-patch-collections]");
+    if (patchTabs) {
+      patchTabs.hidden = requested !== "patches";
+      patchTabs.querySelectorAll("[data-patch-collection]").forEach((link) => {
+        if (link.dataset.patchCollection === (fallSelected ? "fall" : "all")) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
+    }
+    const fallIntro = document.querySelector("[data-fall-intro]");
+    if (fallIntro) {
+      fallIntro.hidden = requested !== "patches";
+      const fallLink = fallIntro.querySelector("[data-fall-link]");
+      if (fallLink) fallLink.hidden = fallSelected;
+    }
     document.querySelectorAll("[data-products]").forEach((grid) => {
       const category = grid.dataset.products;
       const limit = Number(grid.dataset.limit || 99);
       const list = products.filter((item) => {
-        if (grid.hasAttribute("data-collection-grid") && selected) return selected.categories.includes(item.category);
+        if (grid.hasAttribute("data-collection-grid") && selected) return selected.categories.includes(item.category) && (!fallSelected || item.collection === "fall");
         return !category || category === "all" || (category === "featured" ? item.featured : item.category === category);
       }).slice(0, limit);
       grid.innerHTML = list.map(productCard).join("");
@@ -113,7 +129,7 @@
     content.hidden = false;
     list.innerHTML = items.map((item) => `<li class="checkout-item">
       ${item.image ? `<img src="${item.image}" alt="">` : `<span class="cart-item-icon" aria-hidden="true">${item.category}</span>`}
-      <div><strong>${item.name}</strong><span>${money.format(item.price)} each</span></div>
+      <div><strong>${item.name}</strong><span>${money.format(item.price)} ${item.unit === "pair" ? "per pair · 2 patches" : "each"}</span></div>
       <div class="quantity" aria-label="Quantity for ${item.name}">
         <button data-qty="${item.id}" data-change="-1" aria-label="Remove one ${item.name}">−</button>
         <span>${item.quantity}</span>

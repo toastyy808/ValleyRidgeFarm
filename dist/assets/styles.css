@@ -233,3 +233,19 @@ fieldset.field { border: 0; padding: 0; }
   .mobile-nav.open { display: grid; gap: .75rem; padding: 0 1rem 1rem; }
   .mobile-nav a { padding: .45rem 0; font-weight: 800; }
 }
+
+/* Fall Collection within Patches */
+.patch-collections[hidden], .fall-intro[hidden], [data-fall-link][hidden] { display: none; }
+.patch-collections { padding-top: .75rem; border-top: 1px solid var(--line); }
+.fall-intro { display: grid; grid-template-columns: minmax(0, .75fr) minmax(0, 1fr); align-items: center; gap: clamp(1.5rem, 4vw, 3rem); margin: 1.5rem 0 2rem; padding: clamp(1.25rem, 3vw, 2rem); border: 1px solid #e1c9b0; border-radius: var(--radius); background: #fff3e4; }
+.fall-intro > img { width: 100%; height: 310px; object-fit: contain; background: white; border-radius: 14px; }
+.fall-intro h2 { font-size: clamp(2rem, 3.5vw, 3rem); max-width: 15ch; }
+.fall-intro p { max-width: 46ch; }
+.fall-intro .fall-offer { font-size: 1.4rem; font-weight: 800; color: var(--clay); }
+.price-unit { font-size: .85rem; font-weight: 500; white-space: nowrap; color: var(--muted); }
+.fall-product .product-photo { background: white; }
+.fall-product .product-photo img { object-fit: cover; }
+@media (max-width: 600px) {
+  .fall-intro { grid-template-columns: 1fr; }
+  .fall-intro > img { height: 260px; }
+}

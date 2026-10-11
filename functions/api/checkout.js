@@ -5,7 +5,10 @@ const CATALOG = {
   "farm-eggs": ["Farm-Fresh Chicken Eggs (dozen)", 500, false],
   "fertile-hatching-eggs": ["Fertile Hatching Eggs", 2400, true],  "seasonal-box": ["Valley Ridge Gift Box", 2800, true],
   "honey-8oz": ["Honey (8 oz jar)", 1200, false],
-  "patch-2in": ["Patch (2 inch)", 500, false]
+  "patch-2in": ["Patch (2 inch)", 500, false],
+  "fall-pumpkin-pair": ["Pumpkin Patch Pair (2 matching 2 inch iron-on patches)", 300, false],
+  "fall-maple-leaf-pair": ["Maple Leaf Patch Pair (2 matching 2 inch iron-on patches)", 300, false],
+  "fall-acorn-pair": ["Acorn Patch Pair (2 matching 2 inch iron-on patches)", 300, false]
 };
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
