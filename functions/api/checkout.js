@@ -6,10 +6,11 @@ const CATALOG = {
   "fertile-hatching-eggs": ["Fertile Hatching Eggs", 2400, true],  "seasonal-box": ["Valley Ridge Gift Box", 2800, true],
   "honey-8oz": ["Honey (8 oz jar)", 1200, false],
   "patch-2in": ["Patch (2 inch)", 500, false],
-  "fall-pumpkin-pair": ["Pumpkin Patch Pair (2 matching 2 inch iron-on patches)", 300, false],
-  "fall-maple-leaf-pair": ["Maple Leaf Patch Pair (2 matching 2 inch iron-on patches)", 300, false],
-  "fall-acorn-pair": ["Acorn Patch Pair (2 matching 2 inch iron-on patches)", 300, false]
+  "fall-pumpkin-pair": ["Pumpkin Patch Pair (2 matching 2 inch iron-on patches)", 300, true],
+  "fall-maple-leaf-pair": ["Maple Leaf Patch Pair (2 matching 2 inch iron-on patches)", 300, true],
+  "fall-acorn-pair": ["Acorn Patch Pair (2 matching 2 inch iron-on patches)", 300, true]
 };
+const FREE_SHIPPING_PATCHES = new Set(["fall-pumpkin-pair", "fall-maple-leaf-pair", "fall-acorn-pair"]);
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
 });
@@ -34,8 +35,9 @@ export async function onRequestPost({ request, env }) {
     line_items.push({ name: item[0], quantity: String(quantity), base_price_money: { amount: item[1], currency: "USD" } });
   }
   if (count > 50) return json({ error: "Please reduce your cart quantity." }, 400);
-  const shippingCents = Number(env.SHIPPING_FEE_CENTS);
-  if (fulfillment === "shipping" && (env.SHIPPING_FEE_CENTS == null || !Number.isSafeInteger(shippingCents) || shippingCents < 0 || shippingCents > 10000)) {
+  const freePatchShipping = entries.every(([id]) => FREE_SHIPPING_PATCHES.has(id));
+  const shippingCents = freePatchShipping ? 0 : Number(env.SHIPPING_FEE_CENTS);
+  if (fulfillment === "shipping" && ((!freePatchShipping && env.SHIPPING_FEE_CENTS == null) || !Number.isSafeInteger(shippingCents) || shippingCents < 0 || shippingCents > 10000)) {
     return json({ error: "Shipping checkout is not available yet. Please choose pickup." }, 503);
   }
   const body = {
