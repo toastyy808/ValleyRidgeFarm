@@ -5,6 +5,19 @@
 <title>Valley Ridge Market | Farm Goods, Handmade Finds & Music Lessons</title>
 <meta name="description" content="Shop farm goods, candles, patches and plushies, or join Music at the Farm: $90 per month for four 30-minute music lessons in Conway, Arkansas.">
 <link rel="stylesheet" href="/assets/styles.css?v=fall-shipping-20261011">
+<style>
+.music-section.music-compact { grid-template-columns: minmax(0, 1fr) auto; gap: 1.5rem 2rem; padding: 1.5rem 2rem; background: var(--sage); color: var(--ink); border-radius: 12px; margin-bottom: 2rem; }
+.music-compact .music-copy h2 { font-size: 1.75rem; margin: 0 0 .5rem; color: var(--forest-dark); }
+.music-compact .music-copy p { margin: 0; max-width: 65ch; font-size: .9375rem; }
+.music-compact .music-copy .music-summary { margin-top: .25rem; color: var(--muted); }
+.music-contact > p { margin: 0 0 .75rem; font-size: .9375rem; }
+.music-contact > p strong { color: var(--forest-dark); font-size: 1.125rem; }
+.music-compact .music-actions { display: flex; align-items: center; flex-wrap: wrap; gap: .75rem 1rem; margin: 0; }
+.music-compact .music-actions .button { min-height: 44px; padding: .55rem .9rem; font-size: .875rem; }
+.music-call { font-size: .875rem; text-underline-offset: 4px; }
+@media (max-width: 900px) { .music-section.music-compact { grid-template-columns: 1fr; gap: 1rem; } }
+@media (max-width: 560px) { .music-section.music-compact { padding: 1.25rem; } }
+</style>
 </head>
 <body class="market-home">
 <a class="skip-link" href="#main">Skip to main content</a>
@@ -25,22 +38,15 @@
 </div>
 <div class="market-note"><p><strong>One market. A little of everything we love.</strong> Rooted in family and farm life in Central Arkansas.</p><a href="/about/">Get to know us</a></div>
 </section>
-<section class="music-section container" id="music-at-the-farm" aria-labelledby="music-heading">
+<section class="music-section music-compact container" id="music-at-the-farm" aria-labelledby="music-heading">
   <div class="music-copy">
-    <p class="eyebrow">A place to learn & grow</p>
     <h2 id="music-heading">Music at the Farm</h2>
-    <p class="music-lead">Find your rhythm. Build your confidence. Make music with us.</p>
-    <p>Private music lessons with Mark Wilson in Conway, Arkansas. Students of all ages are welcome, from toddlers to seniors—and beginners, too.</p>
-    <p>With over 11 years of teaching experience and a teaching license, Mark helps students explore the music they love.</p>
-    <p class="music-instruments"><strong>Find your instrument</strong><br>Piano, voice, guitar, drums, violin, cello, banjo, trumpet, trombone & more.</p>
+    <p>Private music lessons with Mark Wilson in Conway, Arkansas. All ages & beginners welcome.</p>
+    <p class="music-summary">Piano, voice, guitar, drums, strings & more.</p>
   </div>
-  <div class="music-plan" aria-label="Monthly music lesson plan">
-    <p class="eyebrow">Private music lessons</p>
-    <p class="music-price"><strong>$90</strong><span>per month</span></p>
-    <p class="music-included"><strong>4 lessons · 30 minutes each</strong></p>
-    <p>Call or text to ask about available lesson times and get started.</p>
-    <div class="music-actions"><a class="button" href="sms:+15012370737">Text about lessons</a><a class="button button-outline" href="tel:+15012370737">Call about lessons</a></div>
-    <p class="music-phone">(501) 237-0737</p>
+  <div class="music-contact">
+    <p><strong>$90/month</strong> · Four 30-minute lessons</p>
+    <div class="music-actions"><a class="button" href="sms:+15012370737">Text about lessons</a><a class="music-call" href="tel:+15012370737">Call (501) 237-0737</a></div>
   </div>
 </section>
 </main>
