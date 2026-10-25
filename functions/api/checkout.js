@@ -46,7 +46,7 @@ export async function onRequestPost({ request, env }) {
     order: { location_id: env.SQUARE_LOCATION_ID, line_items },
     checkout_options: {
       ask_for_shipping_address: fulfillment === "shipping",
-      enable_coupon: false,
+      enable_coupon: true,
       ...(fulfillment === "shipping" ? { shipping_fee: { name: "Shipping", charge: { amount: shippingCents, currency: "USD" } } } : {})
     },
     pre_populated_data: { buyer_email: email.trim() },
