@@ -2,6 +2,7 @@ const CATALOG = {
   "cedar-glow": ["Cedar Glow Candle", 1800, true],
   "vanilla-hearth": ["Vanilla Hearth Candle", 1800, true],
   "lavender-linen": ["Lavender Linen Candle", 1800, true],
+  "sampler-pack-2oz": ["Candle Sampler Pack (4 x 2 oz)", 1200, true],
   "farm-eggs": ["Farm-Fresh Chicken Eggs (dozen)", 500, false],
   "fertile-hatching-eggs": ["Fertile Hatching Eggs", 2400, true],  "seasonal-box": ["Valley Ridge Gift Box", 2800, true],
   "honey-8oz": ["Honey (8 oz jar)", 1200, false],
