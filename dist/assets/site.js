@@ -14,9 +14,9 @@
   }
 
   function product(id) { return products.find((item) => item.id === id); }
-  function cartCount(cart = readCart()) { return Object.values(cart).reduce((sum, qty) => sum + qty, 0); }
+  function cartCount(cart = readCart()) { return cartItems(cart).reduce((sum, item) => sum + item.quantity, 0); }
   function cartItems(cart = readCart()) {
-    return Object.entries(cart).map(([id, quantity]) => ({ ...product(id), quantity })).filter((item) => item.name && item.price != null);
+    return Object.entries(cart).map(([id, quantity]) => ({ ...product(id), quantity })).filter((item) => item.name && item.price != null && !item.soldOut);
   }
 
   function updateCartCount() {
@@ -29,7 +29,7 @@
 
   function addToCart(id) {
     const item = product(id);
-    if (!item || item.price == null) return;
+    if (!item || item.price == null || item.soldOut) return;
     const cart = readCart();
     cart[id] = (cart[id] || 0) + 1;
     saveCart(cart);
@@ -60,7 +60,7 @@
         <div class="fulfillment">${item.fulfillment}</div>
         <div class="product-action">
           <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}${item.unit ? `<span class="price-unit"> / ${item.unit}</span>` : ""}</strong>
-          ${item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
+          ${item.soldOut ? `<span class="button button-small" aria-label="Sold out" aria-disabled="true">Sold out</span>` : item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
         </div>
       </div>
     </article>`;

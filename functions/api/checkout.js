@@ -1,16 +1,4 @@
-const CATALOG = {
-  "cedar-glow": ["Cedar Glow Candle", 1800, true],
-  "vanilla-hearth": ["Vanilla Hearth Candle", 1800, true],
-  "lavender-linen": ["Lavender Linen Candle", 1800, true],
-  "sampler-pack-2oz": ["Candle Sampler Pack (4 x 2 oz)", 1200, true],
-  "farm-eggs": ["Farm-Fresh Chicken Eggs (dozen)", 500, false],
-  "fertile-hatching-eggs": ["Fertile Hatching Eggs", 2400, true],  "seasonal-box": ["Valley Ridge Gift Box", 2800, true],
-  "honey-8oz": ["Honey (8 oz jar)", 1200, false],
-  "patch-2in": ["Patch (2 inch)", 500, false],
-  "fall-pumpkin-pair": ["Pumpkin Patch Pair (2 matching 2 inch iron-on patches)", 300, true],
-  "fall-maple-leaf-pair": ["Maple Leaf Patch Pair (2 matching 2 inch iron-on patches)", 300, true],
-  "fall-acorn-pair": ["Acorn Patch Pair (2 matching 2 inch iron-on patches)", 300, true]
-};
+const CATALOG = {}; // All products are currently sold out.
 const FREE_SHIPPING_PATCHES = new Set(["fall-pumpkin-pair", "fall-maple-leaf-pair", "fall-acorn-pair"]);
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
@@ -30,7 +18,7 @@ export async function onRequestPost({ request, env }) {
   const line_items = [];
   for (const [id, quantity] of entries) {
     const item = CATALOG[id];
-    if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > 25) return json({ error: "Please refresh your cart and try again." }, 400);
+    if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > 25) return json({ error: "This item is sold out. Please refresh your cart and try again." }, 400);
     if (fulfillment === "shipping" && !item[2]) return json({ error: "One or more items in your cart are available for pickup only." }, 400);
     count += quantity;
     line_items.push({ name: item[0], quantity: String(quantity), base_price_money: { amount: item[1], currency: "USD" } });
