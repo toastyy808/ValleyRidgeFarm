@@ -1,4 +1,6 @@
-const CATALOG = {}; // All products are currently sold out.
+const CATALOG = {
+  "honey-4oz": ["Honey (4 oz jar)", 600, false]
+}; // Only honey is currently available; all other products are sold out.
 const FREE_SHIPPING_PATCHES = new Set(["fall-pumpkin-pair", "fall-maple-leaf-pair", "fall-acorn-pair"]);
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
