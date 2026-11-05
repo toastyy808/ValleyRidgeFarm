@@ -1,12 +1,9 @@
 const CATALOG = {
-  "cedar-glow": ["Cedar Glow Candle", 1800, true],
-  "vanilla-hearth": ["Vanilla Hearth Candle", 1800, true],
-  "lavender-linen": ["Lavender Linen Candle", 1800, true],
-  "farm-eggs": ["Farm-Fresh Chicken Eggs (dozen)", 500, false],
-  "fertile-hatching-eggs": ["Fertile Hatching Eggs", 2400, true],  "seasonal-box": ["Valley Ridge Gift Box", 2800, true],
-  "honey-8oz": ["Honey (8 oz jar)", 1200, false],
-  "patch-2in": ["Patch (2 inch)", 500, false]
-};
+  "honey-4oz": ["Honey (4 oz jar)", 600, true],
+  "vanilla-latte": ["Vanilla Latte Candle", 1800, true],
+  "heart-patch-pair": ["Heart Iron-On Patch (2 Pack)", 300, true]
+}; // Honey, the Vanilla Latte Candle, and the Heart patch are currently available; all other products are sold out.
+const FREE_SHIPPING_PATCHES = new Set(["fall-pumpkin-pair", "fall-maple-leaf-pair", "fall-acorn-pair", "heart-patch-pair"]);
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
 });
@@ -23,16 +20,22 @@ export async function onRequestPost({ request, env }) {
   if (!entries.length || entries.length > 20) return json({ error: "Your cart is empty or too large." }, 400);
   let count = 0;
   const line_items = [];
-  for (const [id, quantity] of entries) {
+  for (const [key, quantity] of entries) {
+    // Cart keys are "product-id" or "product-id|Option|Option" for products with variants.
+    const parts = String(key).split("|");
+    const id = parts[0];
+    const variant = parts.slice(1).filter(Boolean);
     const item = CATALOG[id];
-    if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > 25) return json({ error: "Please refresh your cart and try again." }, 400);
+    if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > 25) return json({ error: "This item is sold out. Please refresh your cart and try again." }, 400);
     if (fulfillment === "shipping" && !item[2]) return json({ error: "One or more items in your cart are available for pickup only." }, 400);
     count += quantity;
-    line_items.push({ name: item[0], quantity: String(quantity), base_price_money: { amount: item[1], currency: "USD" } });
+    const name = variant.length ? `${item[0]} — ${variant.join(", ")}` : item[0];
+    line_items.push({ name, quantity: String(quantity), base_price_money: { amount: item[1], currency: "USD" } });
   }
   if (count > 50) return json({ error: "Please reduce your cart quantity." }, 400);
-  const shippingCents = Number(env.SHIPPING_FEE_CENTS);
-  if (fulfillment === "shipping" && (env.SHIPPING_FEE_CENTS == null || !Number.isSafeInteger(shippingCents) || shippingCents < 0 || shippingCents > 10000)) {
+  const freePatchShipping = entries.every(([key]) => FREE_SHIPPING_PATCHES.has(String(key).split("|")[0]));
+  const shippingCents = freePatchShipping ? 0 : Number(env.SHIPPING_FEE_CENTS);
+  if (fulfillment === "shipping" && ((!freePatchShipping && env.SHIPPING_FEE_CENTS == null) || !Number.isSafeInteger(shippingCents) || shippingCents < 0 || shippingCents > 10000)) {
     return json({ error: "Shipping checkout is not available yet. Please choose pickup." }, 503);
   }
   const body = {
@@ -40,7 +43,7 @@ export async function onRequestPost({ request, env }) {
     order: { location_id: env.SQUARE_LOCATION_ID, line_items },
     checkout_options: {
       ask_for_shipping_address: fulfillment === "shipping",
-      enable_coupon: false,
+      enable_coupon: true,
       ...(fulfillment === "shipping" ? { shipping_fee: { name: "Shipping", charge: { amount: shippingCents, currency: "USD" } } } : {})
     },
     pre_populated_data: { buyer_email: email.trim() },

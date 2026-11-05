@@ -14,9 +14,26 @@
   }
 
   function product(id) { return products.find((item) => item.id === id); }
-  function cartCount(cart = readCart()) { return Object.values(cart).reduce((sum, qty) => sum + qty, 0); }
+
+  // Cart keys are the product id, plus selected option values joined with "|"
+  // (e.g. "vanilla-latte|Round|Wood wick"). Products without options keep the
+  // plain id as their key, so existing carts keep working.
+  function parseCartKey(key) {
+    const parts = String(key).split("|");
+    return { id: parts[0], variant: parts.slice(1) };
+  }
+  function cartKey(id, variant) {
+    return variant && variant.length ? [id, ...variant].join("|") : id;
+  }
+
+  function cartCount(cart = readCart()) { return cartItems(cart).reduce((sum, item) => sum + item.quantity, 0); }
   function cartItems(cart = readCart()) {
-    return Object.entries(cart).map(([id, quantity]) => ({ ...product(id), quantity })).filter((item) => item.name && item.price != null);
+    return Object.entries(cart).map(([key, quantity]) => {
+      const { id, variant } = parseCartKey(key);
+      const item = product(id);
+      if (!item) return null;
+      return { ...item, key, variant, quantity };
+    }).filter((item) => item && item.name && item.price != null && !item.soldOut);
   }
 
   function updateCartCount() {
@@ -27,20 +44,21 @@
     });
   }
 
-  function addToCart(id) {
+  function addToCart(id, variant) {
     const item = product(id);
-    if (!item || item.price == null) return;
+    if (!item || item.price == null || item.soldOut) return;
+    const key = cartKey(id, variant);
     const cart = readCart();
-    cart[id] = (cart[id] || 0) + 1;
+    cart[key] = (cart[key] || 0) + 1;
     saveCart(cart);
     announce(`${item.name} added to your cart.`);
     document.querySelector("[data-cart-button]")?.classList.add("cart-bump");
     setTimeout(() => document.querySelector("[data-cart-button]")?.classList.remove("cart-bump"), 300);
   }
 
-  function setQuantity(id, quantity) {
+  function setQuantity(key, quantity) {
     const cart = readCart();
-    if (quantity <= 0) delete cart[id]; else cart[id] = quantity;
+    if (quantity <= 0) delete cart[key]; else cart[key] = quantity;
     saveCart(cart);
     renderCheckout();
   }
@@ -51,16 +69,21 @@
   }
 
   function productCard(item) {
-    return `<article class="product-card">
+    const options = (item.options || []).map((opt, i) => `
+      <label class="product-option"><span>${opt.name}</span>
+        <select data-option="${i}">${opt.choices.map((choice) => `<option value="${choice}">${choice}</option>`).join("")}</select>
+      </label>`).join("");
+    return `<article class="product-card${item.collection === "fall" ? " fall-product" : ""}">
       <div class="product-photo">${item.image ? `<img src="${item.image}" alt="${item.alt}" loading="lazy">` : `<div class="product-placeholder" role="img" aria-label="${item.name}">${item.name}</div>`}</div>
       <div class="product-info">
-        <p class="eyebrow">${item.category}</p>
+        <p class="eyebrow">${item.collection === "fall" ? "Fall Collection" : item.category}</p>
         <h3>${item.name}</h3>
         <p class="product-description">${item.description}</p>
         <div class="fulfillment">${item.fulfillment}</div>
+        ${options}
         <div class="product-action">
-          <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}</strong>
-          ${item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
+          <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}${item.unit ? `<span class="price-unit"> / ${item.unit}</span>` : ""}</strong>
+          ${item.soldOut ? `<span class="button button-small" aria-label="Sold out" aria-disabled="true">Sold out</span>` : item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
         </div>
       </div>
     </article>`;
@@ -70,28 +93,44 @@
     const collections = {
       farm: { name: "The Farm", categories: ["Fresh Eggs", "Honey", "Seasonal Goods"], description: "Fresh eggs, honey, and seasonal goods from our little corner of Central Arkansas." },
       candles: { name: "Candles", categories: ["Candles"], description: "Find a favorite scent and bring a little warmth home. Available for pickup or shipping." },
-      patches: { name: "Patches", categories: ["Patches"], description: "Little details with plenty of personality. Browse our patches, available for local pickup." },
+      patches: { name: "Patches", categories: ["Patches"], description: "Little details with plenty of personality. Browse our patches for local pickup, or shop the Fall Collection with free shipping." },
       plushies: { name: "Plushies", categories: ["Plushies"], description: "Find a soft new friend. Browse our plushies, available for local pickup." }
     };
-    const requested = new URLSearchParams(window.location.search).get("category");
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("category");
     const selected = Object.hasOwn(collections, requested) ? collections[requested] : null;
+    const fallSelected = requested === "patches" && params.get("collection") === "fall";
     const heading = document.querySelector("[data-collection-title]");
     if (heading) {
-      heading.textContent = selected ? selected.name : "All the good things.";
-      document.querySelector("[data-collection-description]").textContent = selected ? selected.description : "Explore the farm, find your favorite candle, or pick out a patch or plushie.";
-      document.title = `${selected ? selected.name : "Shop all"} | Valley Ridge Market`;
+      heading.textContent = fallSelected ? "Fall Collection" : selected ? selected.name : "All the good things.";
+      document.querySelector("[data-collection-description]").textContent = fallSelected ? "Pumpkins, maple leaves, and acorns for a little autumn personality. Two matching 2 inch round iron-on patches for $3, with free shipping on fall patch orders." : selected ? selected.description : "Explore the farm, find your favorite candle, or pick out a patch or plushie.";
+      document.title = `${fallSelected ? "Fall Collection · Patches" : selected ? selected.name : "Shop all"} | Valley Ridge Market`;
       document.querySelectorAll("[data-category-link]").forEach((link) => {
         if (link.dataset.categoryLink === (selected ? requested : "all")) link.setAttribute("aria-current", "page");
         else link.removeAttribute("aria-current");
       });
     }
+    const patchTabs = document.querySelector("[data-patch-collections]");
+    if (patchTabs) {
+      patchTabs.hidden = requested !== "patches";
+      patchTabs.querySelectorAll("[data-patch-collection]").forEach((link) => {
+        if (link.dataset.patchCollection === (fallSelected ? "fall" : "all")) link.setAttribute("aria-current", "page");
+        else link.removeAttribute("aria-current");
+      });
+    }
+    const fallIntro = document.querySelector("[data-fall-intro]");
+    if (fallIntro) {
+      fallIntro.hidden = requested !== "patches";
+      const fallLink = fallIntro.querySelector("[data-fall-link]");
+      if (fallLink) fallLink.hidden = fallSelected;
+    }
     document.querySelectorAll("[data-products]").forEach((grid) => {
       const category = grid.dataset.products;
       const limit = Number(grid.dataset.limit || 99);
       const list = products.filter((item) => {
-        if (grid.hasAttribute("data-collection-grid") && selected) return selected.categories.includes(item.category);
+        if (grid.hasAttribute("data-collection-grid") && selected) return selected.categories.includes(item.category) && (!fallSelected || item.collection === "fall");
         return !category || category === "all" || (category === "featured" ? item.featured : item.category === category);
-      }).slice(0, limit);
+      }).sort((a, b) => (a.soldOut ? 1 : 0) - (b.soldOut ? 1 : 0)).slice(0, limit);
       grid.innerHTML = list.map(productCard).join("");
       const count = document.querySelector("[data-product-count]");
       if (count && grid.hasAttribute("data-collection-grid")) count.textContent = `${list.length} ${list.length === 1 ? "item" : "items"}`;
@@ -113,11 +152,11 @@
     content.hidden = false;
     list.innerHTML = items.map((item) => `<li class="checkout-item">
       ${item.image ? `<img src="${item.image}" alt="">` : `<span class="cart-item-icon" aria-hidden="true">${item.category}</span>`}
-      <div><strong>${item.name}</strong><span>${money.format(item.price)} each</span></div>
+      <div><strong>${item.name}</strong><span>${item.variant && item.variant.length ? `${item.variant.join(" · ")} · ` : ""}${money.format(item.price)} ${item.unit === "pair" ? "per pair · 2 patches" : "each"}</span></div>
       <div class="quantity" aria-label="Quantity for ${item.name}">
-        <button data-qty="${item.id}" data-change="-1" aria-label="Remove one ${item.name}">−</button>
+        <button data-qty="${item.key}" data-change="-1" aria-label="Remove one ${item.name}">−</button>
         <span>${item.quantity}</span>
-        <button data-qty="${item.id}" data-change="1" aria-label="Add one ${item.name}">+</button>
+        <button data-qty="${item.key}" data-change="1" aria-label="Add one ${item.name}">+</button>
       </div>
       <strong>${money.format(item.price * item.quantity)}</strong>
     </li>`).join("");
@@ -125,18 +164,25 @@
     document.querySelector("[data-subtotal]").textContent = money.format(subtotal);
     document.querySelector("[data-total]").textContent = money.format(subtotal);
     const pickupOnly = items.some((item) => item.fulfillment.toLowerCase().includes("pickup only"));
+    const freePatchShipping = items.every((item) => item.freeShipping === true);
     const shipping = document.querySelector("[data-shipping-option]");
     if (shipping) {
       shipping.hidden = pickupOnly;
       if (pickupOnly && shipping.querySelector("input").checked) document.querySelector("#pickup").checked = true;
     }
     const note = document.querySelector("[data-fulfillment-note]");
-    if (note) note.textContent = pickupOnly ? "Your cart contains an item available for local pickup only. Order shippable items separately if you need delivery." : "Choose local pickup or shipping. Fertile hatching eggs and candles may be shipped.";
+    if (note) note.textContent = pickupOnly ? "Your cart contains an item available for local pickup only. Order shippable items separately if you need delivery." : freePatchShipping ? "Choose local pickup or free shipping. Shipping is free for orders containing only fall patch pairs." : "Choose local pickup or shipping. Shipping charges are shown at secure checkout.";
+    const shippingCost = document.querySelector("[data-shipping-cost]");
+    if (shippingCost) shippingCost.textContent = freePatchShipping ? "Free" : "Calculated next";
   }
 
   document.addEventListener("click", (event) => {
     const add = event.target.closest("[data-add]");
-    if (add) addToCart(add.dataset.add);
+    if (add) {
+      const card = add.closest(".product-card");
+      const variant = card ? [...card.querySelectorAll("select[data-option]")].map((select) => select.value) : [];
+      addToCart(add.dataset.add, variant);
+    }
     const qty = event.target.closest("[data-qty]");
     if (qty) {
       const cart = readCart();
