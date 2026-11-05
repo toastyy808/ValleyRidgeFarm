@@ -1,8 +1,9 @@
 const CATALOG = {
   "honey-4oz": ["Honey (4 oz jar)", 600, true],
-  "vanilla-latte": ["Vanilla Latte Candle", 1800, true],
+  "vanilla-latte-oval": ["Vanilla Latte Candle — Oval", 1800, true],
+  "vanilla-latte-round": ["Vanilla Latte Candle — Round", 1800, true],
   "heart-patch-pair": ["Heart Iron-On Patch (2 Pack)", 300, true]
-}; // Honey, the Vanilla Latte Candle, and the Heart patch are currently available; all other products are sold out.
+}; // Honey, the Vanilla Latte Candles, and the Heart patch are currently available; all other products are sold out.
 const FREE_SHIPPING_PATCHES = new Set(["fall-pumpkin-pair", "fall-maple-leaf-pair", "fall-acorn-pair", "heart-patch-pair"]);
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
