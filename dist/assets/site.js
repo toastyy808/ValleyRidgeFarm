@@ -14,9 +14,26 @@
   }
 
   function product(id) { return products.find((item) => item.id === id); }
+
+  // Cart keys are the product id, plus selected option values joined with "|"
+  // (e.g. "vanilla-latte|Round|Wood wick"). Products without options keep the
+  // plain id as their key, so existing carts keep working.
+  function parseCartKey(key) {
+    const parts = String(key).split("|");
+    return { id: parts[0], variant: parts.slice(1) };
+  }
+  function cartKey(id, variant) {
+    return variant && variant.length ? [id, ...variant].join("|") : id;
+  }
+
   function cartCount(cart = readCart()) { return cartItems(cart).reduce((sum, item) => sum + item.quantity, 0); }
   function cartItems(cart = readCart()) {
-    return Object.entries(cart).map(([id, quantity]) => ({ ...product(id), quantity })).filter((item) => item.name && item.price != null && !item.soldOut);
+    return Object.entries(cart).map(([key, quantity]) => {
+      const { id, variant } = parseCartKey(key);
+      const item = product(id);
+      if (!item) return null;
+      return { ...item, key, variant, quantity };
+    }).filter((item) => item && item.name && item.price != null && !item.soldOut);
   }
 
   function updateCartCount() {
@@ -27,20 +44,21 @@
     });
   }
 
-  function addToCart(id) {
+  function addToCart(id, variant) {
     const item = product(id);
     if (!item || item.price == null || item.soldOut) return;
+    const key = cartKey(id, variant);
     const cart = readCart();
-    cart[id] = (cart[id] || 0) + 1;
+    cart[key] = (cart[key] || 0) + 1;
     saveCart(cart);
     announce(`${item.name} added to your cart.`);
     document.querySelector("[data-cart-button]")?.classList.add("cart-bump");
     setTimeout(() => document.querySelector("[data-cart-button]")?.classList.remove("cart-bump"), 300);
   }
 
-  function setQuantity(id, quantity) {
+  function setQuantity(key, quantity) {
     const cart = readCart();
-    if (quantity <= 0) delete cart[id]; else cart[id] = quantity;
+    if (quantity <= 0) delete cart[key]; else cart[key] = quantity;
     saveCart(cart);
     renderCheckout();
   }
@@ -51,6 +69,10 @@
   }
 
   function productCard(item) {
+    const options = (item.options || []).map((opt, i) => `
+      <label class="product-option"><span>${opt.name}</span>
+        <select data-option="${i}">${opt.choices.map((choice) => `<option value="${choice}">${choice}</option>`).join("")}</select>
+      </label>`).join("");
     return `<article class="product-card${item.collection === "fall" ? " fall-product" : ""}">
       <div class="product-photo">${item.image ? `<img src="${item.image}" alt="${item.alt}" loading="lazy">` : `<div class="product-placeholder" role="img" aria-label="${item.name}">${item.name}</div>`}</div>
       <div class="product-info">
@@ -58,6 +80,7 @@
         <h3>${item.name}</h3>
         <p class="product-description">${item.description}</p>
         <div class="fulfillment">${item.fulfillment}</div>
+        ${options}
         <div class="product-action">
           <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}${item.unit ? `<span class="price-unit"> / ${item.unit}</span>` : ""}</strong>
           ${item.soldOut ? `<span class="button button-small" aria-label="Sold out" aria-disabled="true">Sold out</span>` : item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
@@ -107,7 +130,7 @@
       const list = products.filter((item) => {
         if (grid.hasAttribute("data-collection-grid") && selected) return selected.categories.includes(item.category) && (!fallSelected || item.collection === "fall");
         return !category || category === "all" || (category === "featured" ? item.featured : item.category === category);
-      }).slice(0, limit);
+      }).sort((a, b) => (a.soldOut ? 1 : 0) - (b.soldOut ? 1 : 0)).slice(0, limit);
       grid.innerHTML = list.map(productCard).join("");
       const count = document.querySelector("[data-product-count]");
       if (count && grid.hasAttribute("data-collection-grid")) count.textContent = `${list.length} ${list.length === 1 ? "item" : "items"}`;
@@ -129,11 +152,11 @@
     content.hidden = false;
     list.innerHTML = items.map((item) => `<li class="checkout-item">
       ${item.image ? `<img src="${item.image}" alt="">` : `<span class="cart-item-icon" aria-hidden="true">${item.category}</span>`}
-      <div><strong>${item.name}</strong><span>${money.format(item.price)} ${item.unit === "pair" ? "per pair · 2 patches" : "each"}</span></div>
+      <div><strong>${item.name}</strong><span>${item.variant && item.variant.length ? `${item.variant.join(" · ")} · ` : ""}${money.format(item.price)} ${item.unit === "pair" ? "per pair · 2 patches" : "each"}</span></div>
       <div class="quantity" aria-label="Quantity for ${item.name}">
-        <button data-qty="${item.id}" data-change="-1" aria-label="Remove one ${item.name}">−</button>
+        <button data-qty="${item.key}" data-change="-1" aria-label="Remove one ${item.name}">−</button>
         <span>${item.quantity}</span>
-        <button data-qty="${item.id}" data-change="1" aria-label="Add one ${item.name}">+</button>
+        <button data-qty="${item.key}" data-change="1" aria-label="Add one ${item.name}">+</button>
       </div>
       <strong>${money.format(item.price * item.quantity)}</strong>
     </li>`).join("");
@@ -155,7 +178,11 @@
 
   document.addEventListener("click", (event) => {
     const add = event.target.closest("[data-add]");
-    if (add) addToCart(add.dataset.add);
+    if (add) {
+      const card = add.closest(".product-card");
+      const variant = card ? [...card.querySelectorAll("select[data-option]")].map((select) => select.value) : [];
+      addToCart(add.dataset.add, variant);
+    }
     const qty = event.target.closest("[data-qty]");
     if (qty) {
       const cart = readCart();
