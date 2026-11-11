@@ -14,6 +14,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
 });
 export async function onRequestPost({ request, env }) {
   if (!env.SQUARE_ACCESS_TOKEN || !env.SQUARE_LOCATION_ID) return json({ error: "Checkout is being set up. Please try again soon." }, 503);
+  try {
   let input;
   try { input = await request.json(); } catch { return json({ error: "Invalid cart." }, 400); }
   const { cart, fulfillment, email } = input || {};
@@ -49,7 +50,7 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Shipping checkout is not available yet. Please choose pickup." }, 503);
   }
   const body = {
-    idempotency_key: crypto.randomUUID(),
+    idempotency_key: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 10)}`,
     order: { location_id: env.SQUARE_LOCATION_ID, line_items },
     checkout_options: {
       ask_for_shipping_address: fulfillment === "shipping",
@@ -74,5 +75,9 @@ export async function onRequestPost({ request, env }) {
   } catch (error) {
     console.error("Square checkout network error", error);
     return json({ error: "Checkout is temporarily unavailable. Please try again later." }, 502);
+  }
+  } catch (error) {
+    console.error("Checkout handler error", error);
+    return json({ error: "Checkout error: " + (error && error.message ? error.message : String(error)) }, 502);
   }
 }
