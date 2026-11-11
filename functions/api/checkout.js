@@ -23,7 +23,7 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Please check your cart and email address." }, 400);
   }
   const entries = Object.entries(cart);
-  if (!entries.length || entries.length > 20) return json({ error: "Your cart is empty or too large. [deploy-check]" }, 400);
+  if (!entries.length || entries.length > 20) return json({ error: "Your cart is empty or too large." }, 400);
   let count = 0;
   let subtotalCents = 0;
   const line_items = [];
@@ -60,14 +60,6 @@ export async function onRequestPost({ request, env }) {
     pre_populated_data: { buyer_email: email.trim() },
     payment_note: `Valley Ridge Farms — ${fulfillment === "pickup" ? "local pickup; arrange after purchase" : "shipping"}`
   };
-  // TEMP PROBE 3: GET the Square URL with no auth/headers/body, to test whether the host itself is the problem.
-  try {
-    const probe = await fetch("https://connect.squareup.com/v2/online-checkout/payment-links", { method: "GET" });
-    const probeText = await probe.text();
-    return json({ probe: { status: probe.status, len: probeText.length, head: probeText.slice(0, 120) } });
-  } catch (e) {
-    return json({ probeError: String(e && e.message ? e.message : e) }, 502);
-  }
   try {
     const response = await fetch("https://connect.squareup.com/v2/online-checkout/payment-links", {
       method: "POST",
