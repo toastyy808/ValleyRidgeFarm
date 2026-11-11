@@ -165,15 +165,16 @@
     document.querySelector("[data-total]").textContent = money.format(subtotal);
     const pickupOnly = items.some((item) => item.fulfillment.toLowerCase().includes("pickup only"));
     const freePatchShipping = items.every((item) => item.freeShipping === true);
+    const freeShipping = freePatchShipping || subtotal >= 55;
     const shipping = document.querySelector("[data-shipping-option]");
     if (shipping) {
       shipping.hidden = pickupOnly;
       if (pickupOnly && shipping.querySelector("input").checked) document.querySelector("#pickup").checked = true;
     }
     const note = document.querySelector("[data-fulfillment-note]");
-    if (note) note.textContent = pickupOnly ? "Your cart contains an item available for local pickup only. Order shippable items separately if you need delivery." : freePatchShipping ? "Choose local pickup or free shipping. Shipping is free for orders containing only fall patch pairs." : "Choose local pickup or shipping. Shipping charges are shown at secure checkout.";
+    if (note) note.textContent = pickupOnly ? "Your cart contains an item available for local pickup only. Order shippable items separately if you need delivery." : freePatchShipping ? "Choose local pickup or free shipping. Shipping is free for orders containing only fall patch pairs." : freeShipping ? "Choose local pickup or free shipping \u2014 your order is over $55, so shipping is free." : "Choose local pickup or shipping. Shipping is $8.00 flat, free on orders of $55 or more.";
     const shippingCost = document.querySelector("[data-shipping-cost]");
-    if (shippingCost) shippingCost.textContent = freePatchShipping ? "Free" : "Calculated next";
+    if (shippingCost) shippingCost.textContent = freeShipping ? "Free" : "Calculated next";
   }
 
   document.addEventListener("click", (event) => {

@@ -24,6 +24,7 @@ export async function onRequestPost({ request, env }) {
   const entries = Object.entries(cart);
   if (!entries.length || entries.length > 20) return json({ error: "Your cart is empty or too large." }, 400);
   let count = 0;
+  let subtotalCents = 0;
   const line_items = [];
   for (const [key, quantity] of entries) {
     // Cart keys are "product-id" or "product-id|Option|Option" for products with variants.
@@ -34,13 +35,17 @@ export async function onRequestPost({ request, env }) {
     if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > 25) return json({ error: "This item is sold out. Please refresh your cart and try again." }, 400);
     if (fulfillment === "shipping" && !item[2]) return json({ error: "One or more items in your cart are available for pickup only." }, 400);
     count += quantity;
+    subtotalCents += item[1] * quantity;
     const name = variant.length ? `${item[0]} — ${variant.join(", ")}` : item[0];
     line_items.push({ name, quantity: String(quantity), base_price_money: { amount: item[1], currency: "USD" } });
   }
   if (count > 50) return json({ error: "Please reduce your cart quantity." }, 400);
   const freePatchShipping = entries.every(([key]) => FREE_SHIPPING_PATCHES.has(String(key).split("|")[0]));
-  const shippingCents = freePatchShipping ? 0 : Number(env.SHIPPING_FEE_CENTS);
-  if (fulfillment === "shipping" && ((!freePatchShipping && env.SHIPPING_FEE_CENTS == null) || !Number.isSafeInteger(shippingCents) || shippingCents < 0 || shippingCents > 10000)) {
+  // Flat shipping is $8 (800 cents) by default; set SHIPPING_FEE_CENTS in Cloudflare to override it.
+  // Shipping is free when the order subtotal is $55+ or the cart holds only free-shipping patches.
+  const freeShipping = freePatchShipping || subtotalCents >= 5500;
+  const shippingCents = freeShipping ? 0 : Number(env.SHIPPING_FEE_CENTS ?? 800);
+  if (fulfillment === "shipping" && !freeShipping && (!Number.isSafeInteger(shippingCents) || shippingCents < 0 || shippingCents > 10000)) {
     return json({ error: "Shipping checkout is not available yet. Please choose pickup." }, 503);
   }
   const body = {
@@ -49,7 +54,7 @@ export async function onRequestPost({ request, env }) {
     checkout_options: {
       ask_for_shipping_address: fulfillment === "shipping",
       enable_coupon: true,
-      ...(fulfillment === "shipping" ? { shipping_fee: { name: "Shipping", charge: { amount: shippingCents, currency: "USD" } } } : {})
+      ...(fulfillment === "shipping" && !freeShipping ? { shipping_fee: { name: "Shipping", charge: { amount: shippingCents, currency: "USD" } } } : {})
     },
     pre_populated_data: { buyer_email: email.trim() },
     payment_note: `Valley Ridge Farms — ${fulfillment === "pickup" ? "local pickup; arrange after purchase" : "shipping"}`
