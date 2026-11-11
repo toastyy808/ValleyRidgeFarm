@@ -2,8 +2,12 @@ const CATALOG = {
   "honey-4oz": ["Honey (4 oz jar)", 600, true],
   "vanilla-latte-oval": ["Vanilla Latte Candle — Oval", 1800, true],
   "vanilla-latte-round": ["Vanilla Latte Candle — Round", 1800, true],
-  "heart-patch-pair": ["Heart Iron-On Patch (2 Pack)", 300, true]
-}; // Honey, the Vanilla Latte Candles, and the Heart patch are currently available; all other products are sold out.
+  "heart-patch-pair": ["Heart Iron-On Patch (2 Pack)", 300, true],
+  "patch-2in": ["Patch (2 inch)", 500, false],
+  "fall-pumpkin-pair": ["Pumpkin Patch Pair", 300, true],
+  "fall-maple-leaf-pair": ["Maple Leaf Patch Pair", 300, true],
+  "fall-acorn-pair": ["Acorn Patch Pair", 300, true]
+}; // Honey, the Vanilla Latte Candles, and all Patches are currently available; all other products are sold out.
 const FREE_SHIPPING_PATCHES = new Set(["fall-pumpkin-pair", "fall-maple-leaf-pair", "fall-acorn-pair", "heart-patch-pair"]);
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
