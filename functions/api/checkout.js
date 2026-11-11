@@ -60,8 +60,14 @@ export async function onRequestPost({ request, env }) {
     pre_populated_data: { buyer_email: email.trim() },
     payment_note: `Valley Ridge Farms — ${fulfillment === "pickup" ? "local pickup; arrange after purchase" : "shipping"}`
   };
-  // TEMP PROBE: return the computed order instead of calling Square, to isolate the failure.
-  return json({ debug: { shippingCents, freeShipping, subtotalCents, body } });
+  // TEMP PROBE 2: fetch a known-good URL instead of Square, to test whether fetch itself works.
+  try {
+    const probe = await fetch("https://example.com/", { method: "GET" });
+    const probeText = await probe.text();
+    return json({ probe: { status: probe.status, len: probeText.length } });
+  } catch (e) {
+    return json({ probeError: String(e && e.message ? e.message : e) }, 502);
+  }
   try {
     const response = await fetch("https://connect.squareup.com/v2/online-checkout/payment-links", {
       method: "POST",
