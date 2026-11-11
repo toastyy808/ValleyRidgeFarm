@@ -23,7 +23,7 @@ export async function onRequestPost({ request, env }) {
     return json({ error: "Please check your cart and email address." }, 400);
   }
   const entries = Object.entries(cart);
-  if (!entries.length || entries.length > 20) return json({ error: "Your cart is empty or too large." }, 400);
+  if (!entries.length || entries.length > 20) return json({ error: "Your cart is empty or too large. [deploy-check]" }, 400);
   let count = 0;
   let subtotalCents = 0;
   const line_items = [];
