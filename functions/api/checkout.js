@@ -60,11 +60,11 @@ export async function onRequestPost({ request, env }) {
     pre_populated_data: { buyer_email: email.trim() },
     payment_note: `Valley Ridge Farms — ${fulfillment === "pickup" ? "local pickup; arrange after purchase" : "shipping"}`
   };
-  // TEMP PROBE 2: fetch a known-good URL instead of Square, to test whether fetch itself works.
+  // TEMP PROBE 3: GET the Square URL with no auth/headers/body, to test whether the host itself is the problem.
   try {
-    const probe = await fetch("https://example.com/", { method: "GET" });
+    const probe = await fetch("https://connect.squareup.com/v2/online-checkout/payment-links", { method: "GET" });
     const probeText = await probe.text();
-    return json({ probe: { status: probe.status, len: probeText.length } });
+    return json({ probe: { status: probe.status, len: probeText.length, head: probeText.slice(0, 120) } });
   } catch (e) {
     return json({ probeError: String(e && e.message ? e.message : e) }, 502);
   }
