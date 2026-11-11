@@ -17,6 +17,8 @@
 .music-call { font-size: .875rem; text-underline-offset: 4px; }
 @media (max-width: 900px) { .music-section.music-compact { grid-template-columns: 1fr; gap: 1rem; } }
 @media (max-width: 560px) { .music-section.music-compact { padding: 1.25rem; } }
+.collection-candles .collection-photo img { transform: scale(1.25); }
+.collection-candles:hover .collection-photo img { transform: scale(1.3); }
 </style>
 </head>
 <body class="market-home">
@@ -32,7 +34,7 @@
 <div class="collection-heading"><h2>Where would you like to wander?</h2><a href="/shop/">Browse everything</a></div>
 <div class="collection-grid">
 <a class="collection-card collection-farm" href="/shop/?category=farm" aria-labelledby="farm-title farm-cta"><div class="collection-photo"><img src="/assets/eggs.jpg" alt="A white bowl filled with fresh pastel farm eggs" fetchpriority="high"></div><div class="collection-copy"><p class="collection-kicker">Gathered with care</p><h3 id="farm-title">The Farm</h3><p class="collection-description">Fresh eggs, honey & seasonal goods.</p><span class="collection-cta" id="farm-cta">Explore the farm</span></div></a>
-<a class="collection-card collection-candles" href="/shop/?category=candles" aria-labelledby="candles-title candles-cta"><div class="collection-photo"><img src="/assets/candle-oval.jpg" alt="Hand-poured vanilla latte candle in an oval container" fetchpriority="high"></div><div class="collection-copy"><p class="collection-kicker">Make yourself at home</p><h3 id="candles-title">Candles</h3><p class="collection-description">A soft glow. A favorite scent.</p><span class="collection-cta" id="candles-cta">Find your candle</span></div></a>
+<a class="collection-card collection-candles" href="/shop/?category=candles" aria-labelledby="candles-title candles-cta"><div class="collection-photo"><img src="/assets/candle-oval.jpg?v=20261111" alt="Hand-poured vanilla latte candle in an oval container" fetchpriority="high"></div><div class="collection-copy"><p class="collection-kicker">Make yourself at home</p><h3 id="candles-title">Candles</h3><p class="collection-description">A soft glow. A favorite scent.</p><span class="collection-cta" id="candles-cta">Find your candle</span></div></a>
 <a class="collection-card collection-patches" href="/shop/?category=patches" aria-labelledby="patches-title patches-cta"><div class="collection-photo"><img src="/assets/fall/collection.webp" alt="" ></div><div class="collection-copy"><p class="collection-kicker">A little personality</p><h3 id="patches-title">Patches</h3><p class="collection-description">Small details that feel like you.</p><span class="collection-cta" id="patches-cta">Pick your patch</span></div></a>
 <a class="collection-card collection-plushies" href="/shop/?category=plushies" aria-labelledby="plushies-title plushies-cta"><div class="collection-photo"><img src="/assets/plushie.jpg" alt="Red cardinal plush bird" ></div><div class="collection-copy"><p class="collection-kicker">Love at first cuddle</p><h3 id="plushies-title">Plushies</h3><p class="collection-description">Soft friends for little & big hearts.</p><span class="collection-cta" id="plushies-cta">Meet the plushies</span></div></a>
 </div>
