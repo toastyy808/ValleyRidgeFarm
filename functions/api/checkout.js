@@ -58,7 +58,7 @@ export async function onRequestPost({ request, env }) {
       ...(fulfillment === "shipping" && !freeShipping ? { shipping_fee: { name: "Shipping", charge: { amount: shippingCents, currency: "USD" } } } : {})
     },
     pre_populated_data: { buyer_email: email.trim() },
-    payment_note: `Valley Ridge Farms — ${fulfillment === "pickup" ? "local pickup; arrange after purchase" : "shipping"}`
+    payment_note: `Valley Ridge Farm — ${fulfillment === "pickup" ? "local pickup; arrange after purchase" : "shipping"}`
   };
   try {
     const response = await fetch("https://connect.squareup.com/v2/online-checkout/payment-links", {
