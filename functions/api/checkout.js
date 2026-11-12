@@ -9,6 +9,7 @@ const CATALOG = {
   "fall-acorn-pair": ["Acorn Patch Pair", 300, true]
 }; // Honey, the Coconut Beeswax Candles, and all Patches are currently available; all other products are sold out.
 const FREE_SHIPPING_PATCHES = new Set(["fall-pumpkin-pair", "fall-maple-leaf-pair", "fall-acorn-pair", "heart-patch-pair"]);
+const HONEY_IDS = new Set(["honey-4oz"]);
 const CANDLE_IDS = new Set(["vanilla-latte-oval", "vanilla-latte-round"]);
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
@@ -30,6 +31,7 @@ export async function onRequestPost({ request, env }) {
   if (!entries.length || entries.length > 20) return json({ error: "Your cart is empty or too large." }, 400);
   let count = 0;
   let subtotalCents = 0;
+  let honeyUnits = 0;
   let candleUnits = 0;
   const line_items = [];
   for (const [key, quantity] of entries) {
@@ -42,10 +44,16 @@ export async function onRequestPost({ request, env }) {
     if (fulfillment === "shipping" && !item[2]) return json({ error: "One or more items in your cart are available for pickup only." }, 400);
     count += quantity;
     const name = variant.length ? `${item[0]} — ${variant.join(", ")}` : item[0];
-    if (seraphiim && CANDLE_IDS.has(id)) {
+    if (seraphiim && (HONEY_IDS.has(id) || CANDLE_IDS.has(id))) {
       for (let i = 0; i < quantity; i++) {
-        candleUnits++;
-        const unitPrice = candleUnits === 1 ? 0 : candleUnits === 2 ? Math.round(item[1] / 2) : item[1];
+        let unitPrice;
+        if (HONEY_IDS.has(id)) {
+          honeyUnits++;
+          unitPrice = honeyUnits === 1 ? 0 : item[1];
+        } else {
+          candleUnits++;
+          unitPrice = candleUnits === 1 ? Math.round(item[1] / 2) : item[1];
+        }
         subtotalCents += unitPrice;
         line_items.push({ name, quantity: "1", base_price_money: { amount: unitPrice, currency: "USD" } });
       }
