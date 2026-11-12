@@ -53,8 +53,8 @@
     cart[key] = (cart[key] || 0) + 1;
     saveCart(cart);
     announce(`${item.name} added to your cart.`);
-    document.querySelector("[data-cart-button]")?.classList.add("cart-bump");
-    setTimeout(() => document.querySelector("[data-cart-button]")?.classList.remove("cart-bump"), 300);
+    document.querySelectorAll("[data-cart-button]").forEach((btn) => btn.classList.add("cart-bump"));
+    setTimeout(() => document.querySelectorAll("[data-cart-button]").forEach((btn) => btn.classList.remove("cart-bump")), 300);
     if (button) {
       clearTimeout(button._addedTimer);
       button.textContent = "Added ✓";
