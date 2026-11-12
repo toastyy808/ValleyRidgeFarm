@@ -104,7 +104,7 @@
     if (heading) {
       heading.textContent = fallSelected ? "Fall Collection" : selected ? selected.name : "All the good things.";
       document.querySelector("[data-collection-description]").textContent = fallSelected ? "Pumpkins, maple leaves, and acorns for a little autumn personality. Two matching 2 inch round iron-on patches for $3, with free shipping on fall patch orders." : selected ? selected.description : "Explore the farm, find your favorite candle, or pick out a patch or plushie.";
-      document.title = `${fallSelected ? "Fall Collection · Patches" : selected ? selected.name : "Shop all"} | Valley Ridge Market`;
+      document.title = `${fallSelected ? "Fall Collection · Patches" : selected ? selected.name : "Shop all"} | Valley Ridge Farm`;
       document.querySelectorAll("[data-category-link]").forEach((link) => {
         if (link.dataset.categoryLink === (selected ? requested : "all")) link.setAttribute("aria-current", "page");
         else link.removeAttribute("aria-current");

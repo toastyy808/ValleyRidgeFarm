@@ -132,7 +132,7 @@ fieldset.field { border: 0; padding: 0; }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation: none !important; transition: none !important; } }
 .product-placeholder { aspect-ratio: 4/3; display: grid; place-items: center; padding: 1.5rem; text-align: center; color: var(--forest); font-weight: 700; letter-spacing: .04em; }
 
-/* Valley Ridge Market collection-led storefront */
+/* Valley Ridge Farm collection-led storefront */
 :root { --ink: #302831; --forest: #642d43; --forest-dark: #421b2d; --cream: #fcfbf9; --clay: #79374e; --sage: #f0e6eb; --line: #e2dadd; --muted: #665e63; --honey: #f4cc76; --radius: 12px; }
 .container { width: min(1280px, calc(100% - 4rem)); }
 .site-header { background: #fcfbf9; backdrop-filter: none; position: relative; }
