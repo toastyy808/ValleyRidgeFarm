@@ -66,7 +66,9 @@ export async function onRequestPost({ request, env }) {
       headers: { Authorization: `Bearer ${env.SQUARE_ACCESS_TOKEN}`, "Square-Version": "2026-09-16", "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
-    const result = await response.json();
+    const rawText = await response.text();
+    return json({ probe: { status: response.status, head: rawText.slice(0, 300) } });
+    const result = JSON.parse(rawText);
     if (!response.ok || !result.payment_link?.url) {
       console.error("Square checkout error", response.status, result.errors?.map(e => e.code));
       return json({ error: "Square could not start checkout. Please try again later." }, 502);
