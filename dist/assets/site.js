@@ -210,7 +210,10 @@
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cart: readCart(), fulfillment: form.elements.namedItem("fulfillment").value, email: form.elements.namedItem("email").value })
       });
-      const result = await response.json();
+      const rawText = await response.text();
+      let result = null;
+      try { result = JSON.parse(rawText); } catch { result = null; }
+      if (!result) throw new Error("Checkout is unavailable right now. Please try again in a few minutes.");
       if (!response.ok) throw new Error(result.error || "Checkout is unavailable.");
       if (!/^https:\/\/(?:sandbox\.)?(?:square\.link|checkout\.square\.site)\//.test(result.url)) throw new Error("Invalid checkout link.");
       window.location.assign(result.url);
