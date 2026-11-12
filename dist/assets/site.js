@@ -38,11 +38,35 @@
   }
 
   function updateCartCount() {
+    const items = cartItems();
+    const count = items.reduce((sum, item) => sum + item.quantity, 0);
+    const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
     document.querySelectorAll("[data-cart-count]").forEach((node) => {
-      const count = cartCount();
       node.textContent = count;
       node.setAttribute("aria-label", `${count} items in cart`);
     });
+    updateCartDock(count, subtotal);
+  }
+
+  function updateCartDock(count, subtotal) {
+    if (!document.body) return;
+    const isCheckout = window.location.pathname === "/checkout" || window.location.pathname === "/checkout/";
+    let dock = document.querySelector("[data-cart-dock]");
+    if (!dock && count > 0 && !isCheckout) {
+      dock = document.createElement("a");
+      dock.className = "cart-dock";
+      dock.setAttribute("data-cart-dock", "");
+      dock.href = "/checkout/";
+      document.body.appendChild(dock);
+    }
+    if (!dock) return;
+    dock.hidden = count === 0 || isCheckout;
+    document.body.classList.toggle("has-cart-dock", !dock.hidden);
+    if (!dock.hidden) {
+      const noun = count === 1 ? "item" : "items";
+      dock.innerHTML = `<span>🛒 View cart</span><strong>${count} ${noun} · ${money.format(subtotal)}</strong>`;
+      dock.setAttribute("aria-label", `View cart, ${count} ${noun}, subtotal ${money.format(subtotal)}`);
+    }
   }
 
   function addToCart(id, variant, button) {
@@ -53,8 +77,8 @@
     cart[key] = (cart[key] || 0) + 1;
     saveCart(cart);
     announce(`${item.name} added to your cart.`);
-    document.querySelectorAll("[data-cart-button]").forEach((btn) => btn.classList.add("cart-bump"));
-    setTimeout(() => document.querySelectorAll("[data-cart-button]").forEach((btn) => btn.classList.remove("cart-bump")), 300);
+    document.querySelectorAll("[data-cart-button], [data-cart-dock]").forEach((node) => node.classList.add("cart-bump"));
+    setTimeout(() => document.querySelectorAll("[data-cart-button], [data-cart-dock]").forEach((node) => node.classList.remove("cart-bump")), 300);
     if (button) {
       clearTimeout(button._addedTimer);
       button.textContent = "Added ✓";
@@ -273,7 +297,10 @@
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ cart: readCart(), fulfillment: form.elements.namedItem("fulfillment").value, email: form.elements.namedItem("email").value, promo: form.elements.namedItem("promo").value })
       });
-      const result = await response.json();
+      const rawText = await response.text();
+      let result = null;
+      try { result = JSON.parse(rawText); } catch { result = null; }
+      if (!result) throw new Error("Checkout is unavailable right now. Please try again in a few minutes.");
       if (!response.ok) throw new Error(result.error || "Checkout is unavailable.");
       if (!/^https:\/\/(?:sandbox\.)?(?:square\.link|checkout\.square\.site)\//.test(result.url)) throw new Error("Invalid checkout link.");
       window.location.assign(result.url);

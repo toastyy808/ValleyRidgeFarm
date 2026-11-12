@@ -15,7 +15,7 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
 });
 export async function onRequestPost({ request, env }) {
-  if (!env.SQUARE_ACCESS_TOKEN || !env.SQUARE_LOCATION_ID) return json({ error: "Checkout is being set up. Please try again soon." }, 503);
+  if (!env.SQUARE_ACCESS_TOKEN || !env.SQUARE_LOCATION_ID) return json({ error: "Checkout is being set up. Please try again soon." }, 400);
   try {
   let input;
   try { input = await request.json(); } catch { return json({ error: "Invalid cart." }, 400); }
@@ -69,7 +69,7 @@ export async function onRequestPost({ request, env }) {
   const freeShipping = freePatchShipping || subtotalCents >= 5500 || seraphiim;
   const shippingCents = freeShipping ? 0 : Number(env.SHIPPING_FEE_CENTS ?? 800);
   if (fulfillment === "shipping" && !freeShipping && (!Number.isSafeInteger(shippingCents) || shippingCents < 0 || shippingCents > 10000)) {
-    return json({ error: "Shipping checkout is not available yet. Please choose pickup." }, 503);
+    return json({ error: "Shipping checkout is not available yet. Please choose pickup." }, 400);
   }
   const body = {
     idempotency_key: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}-${Math.random().toString(36).slice(2, 10)}`,
@@ -88,18 +88,22 @@ export async function onRequestPost({ request, env }) {
       headers: { Authorization: `Bearer ${env.SQUARE_ACCESS_TOKEN}`, "Square-Version": "2026-09-16", "Content-Type": "application/json" },
       body: JSON.stringify(body)
     });
-    const result = await response.json();
-    if (!response.ok || !result.payment_link?.url) {
-      console.error("Square checkout error", response.status, result.errors?.map(e => e.code));
-      return json({ error: "Square could not start checkout. Please try again later." }, 502);
+    const rawText = await response.text();
+    let result = null;
+    try { result = JSON.parse(rawText); } catch { result = null; }
+    if (!response.ok || !result?.payment_link?.url) {
+      const codes = result?.errors?.map(e => e.code) || [];
+      console.error("Square checkout error", response.status, codes);
+      if (codes.includes("INVALID_EMAIL_ADDRESS")) return json({ error: "Square didn't accept that email address. Please check it and try again." }, 400);
+      return json({ error: "Square could not start checkout. Please try again later." }, 400);
     }
     return json({ url: result.payment_link.url });
   } catch (error) {
     console.error("Square checkout network error", error);
-    return json({ error: "Checkout is temporarily unavailable. Please try again later." }, 502);
+    return json({ error: "Checkout is temporarily unavailable. Please try again later." }, 400);
   }
   } catch (error) {
     console.error("Checkout handler error", error);
-    return json({ error: "Checkout error: " + (error && error.message ? error.message : String(error)) }, 502);
+    return json({ error: "Checkout error: " + (error && error.message ? error.message : String(error)) }, 400);
   }
 }
