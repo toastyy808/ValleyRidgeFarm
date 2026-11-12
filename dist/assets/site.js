@@ -2,6 +2,7 @@
   const CART_KEY = "vrf-cart";
   const products = window.VRF_PRODUCTS || [];
   const money = new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" });
+  let appliedPromo = null;
 
   function readCart() {
     try { return JSON.parse(localStorage.getItem(CART_KEY)) || {}; }
@@ -146,6 +147,17 @@
     });
   }
 
+  function promoDiscount(items) {
+    if (appliedPromo !== "seraphiim") return 0;
+    let discount = 0;
+    let honeyDone = false, candleDone = false;
+    for (const item of items) {
+      if (!honeyDone && item.id === "honey-4oz") { discount += item.price; honeyDone = true; }
+      else if (!candleDone && (item.id === "vanilla-latte-oval" || item.id === "vanilla-latte-round")) { discount += item.price / 2; candleDone = true; }
+    }
+    return discount;
+  }
+
   function renderCheckout() {
     const list = document.querySelector("[data-checkout-items]");
     if (!list) return;
@@ -170,20 +182,29 @@
       <strong>${money.format(item.price * item.quantity)}</strong>
     </li>`).join("");
     const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const discount = promoDiscount(items);
+    const discountedSubtotal = subtotal - discount;
     document.querySelector("[data-subtotal]").textContent = money.format(subtotal);
-    document.querySelector("[data-total]").textContent = money.format(subtotal);
+    const discountRow = document.querySelector("[data-discount-row]");
+    if (discountRow) {
+      discountRow.hidden = discount <= 0;
+      if (discount > 0) document.querySelector("[data-discount]").textContent = "−" + money.format(discount);
+    }
     const pickupOnly = items.some((item) => item.fulfillment.toLowerCase().includes("pickup only"));
     const freePatchShipping = items.every((item) => item.freeShipping === true);
-    const freeShipping = freePatchShipping || subtotal >= 55;
+    const freeShipping = freePatchShipping || discountedSubtotal >= 55 || appliedPromo === "seraphiim";
     const shipping = document.querySelector("[data-shipping-option]");
     if (shipping) {
       shipping.hidden = pickupOnly;
       if (pickupOnly && shipping.querySelector("input").checked) document.querySelector("#pickup").checked = true;
     }
+    const fulfillment = document.querySelector('input[name="fulfillment"]:checked')?.value || "pickup";
+    const shippingCostValue = fulfillment === "shipping" && !freeShipping ? 8 : 0;
+    document.querySelector("[data-total]").textContent = money.format(discountedSubtotal + shippingCostValue);
     const note = document.querySelector("[data-fulfillment-note]");
-    if (note) note.textContent = pickupOnly ? "Your cart contains an item available for local pickup only. Order shippable items separately if you need delivery." : freePatchShipping ? "Choose local pickup or free shipping. Shipping is free for orders containing only fall patch pairs." : freeShipping ? "Choose local pickup or free shipping \u2014 your order is over $55, so shipping is free." : "Choose local pickup or shipping. Shipping is $8.00 flat, free on orders of $55 or more.";
+    if (note) note.textContent = pickupOnly ? "Your cart contains an item available for local pickup only. Order shippable items separately if you need delivery." : appliedPromo === "seraphiim" ? "Promo applied — shipping is free with this code." : freePatchShipping ? "Choose local pickup or free shipping. Shipping is free for orders containing only fall patch pairs." : freeShipping ? "Choose local pickup or free shipping \u2014 your order is over $55, so shipping is free." : "Choose local pickup or shipping. Shipping is $8.00 flat, free on orders of $55 or more.";
     const shippingCost = document.querySelector("[data-shipping-cost]");
-    if (shippingCost) shippingCost.textContent = freeShipping ? "Free" : "Calculated next";
+    if (shippingCost) shippingCost.textContent = fulfillment === "pickup" ? "—" : freeShipping ? "Free" : money.format(8);
   }
 
   document.addEventListener("click", (event) => {
@@ -204,6 +225,39 @@
       const open = nav.classList.toggle("open");
       menu.setAttribute("aria-expanded", String(open));
     }
+  });
+
+  document.querySelector("[data-apply-promo]")?.addEventListener("click", () => {
+    const input = document.querySelector("#promo");
+    const code = input ? input.value.trim().toLowerCase() : "";
+    const msg = document.querySelector("[data-promo-message]");
+    if (!code) {
+      appliedPromo = null;
+      if (msg) { msg.textContent = ""; msg.hidden = true; }
+      renderCheckout();
+      return;
+    }
+    if (code === "seraphiim") {
+      appliedPromo = "seraphiim";
+      if (msg) { msg.textContent = "Code applied — 1 free honey, 50% off 1 candle, free shipping."; msg.hidden = false; }
+    } else {
+      appliedPromo = null;
+      if (msg) { msg.textContent = "That promo code isn't valid."; msg.hidden = false; }
+    }
+    renderCheckout();
+  });
+
+  document.querySelector("#promo")?.addEventListener("input", (event) => {
+    if (event.target.value.trim().toLowerCase() !== appliedPromo) {
+      appliedPromo = null;
+      const msg = document.querySelector("[data-promo-message]");
+      if (msg) { msg.textContent = ""; msg.hidden = true; }
+      renderCheckout();
+    }
+  });
+
+  document.querySelectorAll('input[name="fulfillment"]').forEach((radio) => {
+    radio.addEventListener("change", renderCheckout);
   });
 
   document.querySelector("[data-checkout-form]")?.addEventListener("submit", async (event) => {

@@ -100,6 +100,8 @@ h3 { font-size: 1.35rem; margin-bottom: .6rem; }
 .field label, .field legend { display: block; font-weight: 800; margin-bottom: .4rem; }
 .field input, .field textarea { width: 100%; padding: .8rem .9rem; border: 1px solid #9ca7a0; border-radius: 10px; background: #fff; }
 .field input:focus, .field textarea:focus { outline: 3px solid rgba(216,149,53,.4); border-color: var(--forest); }
+.promo-row { display: flex; gap: .5rem; align-items: stretch; }
+.promo-row input { flex: 1; width: auto; }
 fieldset.field { border: 0; padding: 0; }
 .radio-option { display: flex; gap: .65rem; align-items: flex-start; padding: .8rem; border: 1px solid var(--line); border-radius: 10px; margin-bottom: .6rem; }
 .radio-option input { width: auto; margin-top: .35rem; }
