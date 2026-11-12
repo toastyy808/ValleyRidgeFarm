@@ -48,6 +48,7 @@ h3 { font-size: 1.35rem; margin-bottom: .6rem; }
 .button-row { display: flex; gap: .8rem; flex-wrap: wrap; margin-top: 1.8rem; }
 .button { display: inline-flex; justify-content: center; align-items: center; border: 2px solid var(--forest); border-radius: 999px; padding: .85rem 1.2rem; background: var(--forest); color: #fff; text-decoration: none; font-weight: 800; transition: transform .18s, background .18s; }
 .button:hover, .button:focus-visible { transform: translateY(-2px); background: var(--forest-dark); }
+.button.added { background: var(--honey); }
 .button-outline { background: transparent; color: var(--forest); }
 .button-small { border: 0; padding: .65rem .9rem; font-size: .9rem; }
 .hero-image { position: relative; }

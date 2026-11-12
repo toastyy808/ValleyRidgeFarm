@@ -44,7 +44,7 @@
     });
   }
 
-  function addToCart(id, variant) {
+  function addToCart(id, variant, button) {
     const item = product(id);
     if (!item || item.price == null || item.soldOut) return;
     const key = cartKey(id, variant);
@@ -54,6 +54,15 @@
     announce(`${item.name} added to your cart.`);
     document.querySelector("[data-cart-button]")?.classList.add("cart-bump");
     setTimeout(() => document.querySelector("[data-cart-button]")?.classList.remove("cart-bump"), 300);
+    if (button) {
+      clearTimeout(button._addedTimer);
+      button.textContent = "Added ✓";
+      button.classList.add("added");
+      button._addedTimer = setTimeout(() => {
+        button.textContent = "Add to cart";
+        button.classList.remove("added");
+      }, 1500);
+    }
   }
 
   function setQuantity(key, quantity) {
@@ -182,7 +191,7 @@
     if (add) {
       const card = add.closest(".product-card");
       const variant = card ? [...card.querySelectorAll("select[data-option]")].map((select) => select.value) : [];
-      addToCart(add.dataset.add, variant);
+      addToCart(add.dataset.add, variant, add);
     }
     const qty = event.target.closest("[data-qty]");
     if (qty) {
