@@ -208,7 +208,7 @@
     try {
       const response = await fetch("/api/checkout", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ cart: readCart(), fulfillment: form.elements.namedItem("fulfillment").value, email: form.elements.namedItem("email").value })
+        body: JSON.stringify({ cart: readCart(), fulfillment: form.elements.namedItem("fulfillment").value, email: form.elements.namedItem("email").value, promo: form.elements.namedItem("promo").value })
       });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "Checkout is unavailable.");

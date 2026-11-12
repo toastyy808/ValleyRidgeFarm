@@ -9,6 +9,7 @@ const CATALOG = {
   "fall-acorn-pair": ["Acorn Patch Pair", 300, true]
 }; // Honey, the Coconut Beeswax Candles, and all Patches are currently available; all other products are sold out.
 const FREE_SHIPPING_PATCHES = new Set(["fall-pumpkin-pair", "fall-maple-leaf-pair", "fall-acorn-pair", "heart-patch-pair"]);
+const CANDLE_IDS = new Set(["vanilla-latte-oval", "vanilla-latte-round"]);
 const json = (body, status = 200) => new Response(JSON.stringify(body), {
   status, headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" }
 });
@@ -17,15 +18,19 @@ export async function onRequestPost({ request, env }) {
   try {
   let input;
   try { input = await request.json(); } catch { return json({ error: "Invalid cart." }, 400); }
-  const { cart, fulfillment, email } = input || {};
+  const { cart, fulfillment, email, promo } = input || {};
   if (!cart || typeof cart !== "object" || Array.isArray(cart) || !["pickup", "shipping"].includes(fulfillment) ||
       typeof email !== "string" || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return json({ error: "Please check your cart and email address." }, 400);
   }
+  const promoCode = typeof promo === "string" ? promo.trim().toLowerCase() : "";
+  if (promoCode && promoCode !== "seraphiim") return json({ error: "That promo code isn't valid." }, 400);
+  const seraphiim = promoCode === "seraphiim";
   const entries = Object.entries(cart);
   if (!entries.length || entries.length > 20) return json({ error: "Your cart is empty or too large." }, 400);
   let count = 0;
   let subtotalCents = 0;
+  let candleUnits = 0;
   const line_items = [];
   for (const [key, quantity] of entries) {
     // Cart keys are "product-id" or "product-id|Option|Option" for products with variants.
@@ -36,15 +41,24 @@ export async function onRequestPost({ request, env }) {
     if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > 25) return json({ error: "This item is sold out. Please refresh your cart and try again." }, 400);
     if (fulfillment === "shipping" && !item[2]) return json({ error: "One or more items in your cart are available for pickup only." }, 400);
     count += quantity;
-    subtotalCents += item[1] * quantity;
     const name = variant.length ? `${item[0]} — ${variant.join(", ")}` : item[0];
-    line_items.push({ name, quantity: String(quantity), base_price_money: { amount: item[1], currency: "USD" } });
+    if (seraphiim && CANDLE_IDS.has(id)) {
+      for (let i = 0; i < quantity; i++) {
+        candleUnits++;
+        const unitPrice = candleUnits === 1 ? 0 : candleUnits === 2 ? Math.round(item[1] / 2) : item[1];
+        subtotalCents += unitPrice;
+        line_items.push({ name, quantity: "1", base_price_money: { amount: unitPrice, currency: "USD" } });
+      }
+    } else {
+      subtotalCents += item[1] * quantity;
+      line_items.push({ name, quantity: String(quantity), base_price_money: { amount: item[1], currency: "USD" } });
+    }
   }
   if (count > 50) return json({ error: "Please reduce your cart quantity." }, 400);
   const freePatchShipping = entries.every(([key]) => FREE_SHIPPING_PATCHES.has(String(key).split("|")[0]));
   // Flat shipping is $8 (800 cents) by default; set SHIPPING_FEE_CENTS in Cloudflare to override it.
   // Shipping is free when the order subtotal is $55+ or the cart holds only free-shipping patches.
-  const freeShipping = freePatchShipping || subtotalCents >= 5500;
+  const freeShipping = freePatchShipping || subtotalCents >= 5500 || seraphiim;
   const shippingCents = freeShipping ? 0 : Number(env.SHIPPING_FEE_CENTS ?? 800);
   if (fulfillment === "shipping" && !freeShipping && (!Number.isSafeInteger(shippingCents) || shippingCents < 0 || shippingCents > 10000)) {
     return json({ error: "Shipping checkout is not available yet. Please choose pickup." }, 503);
