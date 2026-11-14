@@ -43,7 +43,15 @@ export async function onRequestPost({ request, env }) {
     if (!item || !Number.isInteger(quantity) || quantity < 1 || quantity > 25) return json({ error: "This item is sold out. Please refresh your cart and try again." }, 400);
     if (fulfillment === "shipping" && !item[2]) return json({ error: "One or more items in your cart are available for pickup only." }, 400);
     count += quantity;
-    const name = variant.length ? `${item[0]} — ${variant.join(", ")}` : item[0];
+    let name = item[0];
+    if (variant.length) {
+      if (CANDLE_IDS.has(id) && variant.length >= 2) {
+        const shape = id === "vanilla-latte-round" ? "Round" : "Oval";
+        name = `${variant[0]} Candle — ${shape} — ${variant[1]}`;
+      } else {
+        name = `${item[0]} — ${variant.join(", ")}`;
+      }
+    }
     if (seraphiim && (HONEY_IDS.has(id) || CANDLE_IDS.has(id))) {
       for (let i = 0; i < quantity; i++) {
         let unitPrice;
