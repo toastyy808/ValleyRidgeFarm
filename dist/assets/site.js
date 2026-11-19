@@ -119,6 +119,7 @@
           <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}${item.unit ? `<span class="price-unit"> / ${item.unit}</span>` : ""}</strong>
           ${item.soldOut ? `<span class="button button-small" aria-label="Sold out" aria-disabled="true">Sold out</span>` : item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
         </div>
+        ${item.category === "Candles" ? `<p class="fine-print" style="margin-top:0.5rem"><a href="/shop/#subscription">or subscribe from $22/mo, free shipping →</a></p>` : ""}
       </div>
     </article>`;
   }
@@ -231,6 +232,99 @@
     if (shippingCost) shippingCost.textContent = fulfillment === "pickup" ? "—" : freeShipping ? "Free" : money.format(8);
   }
 
+  // Candle subscription form (rendered into [data-subscription] on the shop page).
+  function subscriptionOptions() {
+    const oval = product("vanilla-latte-oval");
+    const scents = oval?.options?.find((o) => o.name === "Scent")?.choices || [];
+    const wicks = oval?.options?.find((o) => o.name === "Wick")?.choices || [];
+    return { scents, wicks };
+  }
+  function renderSubscription() {
+    const host = document.querySelector("[data-subscription]");
+    if (!host) return;
+    const { scents, wicks } = subscriptionOptions();
+    const scentOptions = scents.map((s) => `<option value="${s}">${s}</option>`).join("");
+    const wickOptions = wicks.map((w) => `<option value="${w}">${w}</option>`).join("");
+    const candleFields = (n) => `
+      <fieldset class="field" data-sub-candle="${n}">
+        <legend>Candle ${n}</legend>
+        <label class="product-option"><span>Shape</span>
+          <select data-sub-shape><option value="vanilla-latte-oval">Oval</option><option value="vanilla-latte-round">Round</option></select></label>
+        <label class="product-option"><span>Scent</span>
+          <select data-sub-scent>${scentOptions}</select></label>
+        <label class="product-option"><span>Wick</span>
+          <select data-sub-wick>${wickOptions}</select></label>
+      </fieldset>`;
+    host.innerHTML = `
+      <div class="checkout-panel">
+        <h2>Candle Subscription</h2>
+        <p>A candle (or two) every month, with free shipping. Billed monthly — cancel anytime by contacting us.</p>
+        <form data-sub-form>
+          <fieldset class="field"><legend>How many candles each month?</legend>
+            <label class="radio-option"><input type="radio" name="sub-tier" value="one" checked><span><strong>1 candle — $22/month</strong><br>Free shipping.</span></label>
+            <label class="radio-option"><input type="radio" name="sub-tier" value="two"><span><strong>2 candles — $40/month</strong><br>Free shipping.</span></label>
+          </fieldset>
+          ${candleFields(1)}
+          <div data-sub-candle-2 hidden>${candleFields(2)}</div>
+          <fieldset class="field"><legend>Delivery</legend>
+            <label class="radio-option"><input type="radio" name="sub-fulfillment" value="shipping" checked><span><strong>Shipping</strong><br>Free, included in the subscription.</span></label>
+            <label class="radio-option"><input type="radio" name="sub-fulfillment" value="pickup"><span><strong>Local pickup</strong><br>Pickup details will be arranged after purchase.</span></label>
+          </fieldset>
+          <div class="field"><label for="sub-email">Email</label><input id="sub-email" name="sub-email" type="email" autocomplete="email" required></div>
+          <div class="summary-row summary-total"><span data-sub-total>1 candle/month</span><span data-sub-price>$22.00/month</span></div>
+          <button class="button" style="width:100%;margin-top:1rem" type="submit" data-sub-submit>Subscribe — $22/month</button>
+          <div class="checkout-message" role="alert" tabindex="-1" data-sub-message hidden></div>
+        </form>
+      </div>`;
+    const updateTier = () => {
+      const two = host.querySelector('input[name="sub-tier"]:checked').value === "two";
+      host.querySelector("[data-sub-candle-2]").hidden = !two;
+      host.querySelector("[data-sub-total]").textContent = two ? "2 candles/month" : "1 candle/month";
+      host.querySelector("[data-sub-price]").textContent = two ? "$40.00/month" : "$22.00/month";
+      host.querySelector("[data-sub-submit]").textContent = two ? "Subscribe — $40/month" : "Subscribe — $22/month";
+    };
+    host.querySelectorAll('input[name="sub-tier"]').forEach((radio) => radio.addEventListener("change", updateTier));
+    host.querySelector("[data-sub-form]").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const message = host.querySelector("[data-sub-message]");
+      const button = host.querySelector("[data-sub-submit]");
+      const tier = form.elements.namedItem("sub-tier").value;
+      message.hidden = true;
+      button.disabled = true;
+      button.textContent = "Opening secure checkout…";
+      try {
+        const count = tier === "two" ? 2 : 1;
+        const candles = [];
+        for (let n = 1; n <= count; n++) {
+          const fields = host.querySelector(`[data-sub-candle="${n}"]`);
+          candles.push({
+            id: fields.querySelector("[data-sub-shape]").value,
+            scent: fields.querySelector("[data-sub-scent]").value,
+            wick: fields.querySelector("[data-sub-wick]").value
+          });
+        }
+        const response = await fetch("/api/checkout", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ subscription: { tier, candles }, fulfillment: form.elements.namedItem("sub-fulfillment").value, email: form.elements.namedItem("sub-email").value })
+        });
+        const rawText = await response.text();
+        let result = null;
+        try { result = JSON.parse(rawText); } catch { result = null; }
+        if (!result) throw new Error("Checkout is unavailable right now. Please try again in a few minutes.");
+        if (!response.ok) throw new Error(result.error || "Checkout is unavailable.");
+        if (!/^https:\/\/(?:sandbox\.)?(?:square\.link|checkout\.square\.site)\//.test(result.url)) throw new Error("Invalid checkout link.");
+        window.location.assign(result.url);
+      } catch (error) {
+        message.textContent = error.message || "Checkout is unavailable. Please try again.";
+        message.hidden = false;
+        message.focus();
+        button.disabled = false;
+        updateTier();
+      }
+    });
+  }
+
   document.addEventListener("click", (event) => {
     const add = event.target.closest("[data-add]");
     if (add) {
@@ -314,6 +408,7 @@
   });
 
   renderProducts();
+  renderSubscription();
   renderCheckout();
   updateCartCount();
 })();
