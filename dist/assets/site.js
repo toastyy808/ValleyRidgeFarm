@@ -119,7 +119,7 @@
           <strong>${item.price == null ? "Price coming soon" : money.format(item.price)}${item.unit ? `<span class="price-unit"> / ${item.unit}</span>` : ""}</strong>
           ${item.soldOut ? `<span class="button button-small" aria-label="Sold out" aria-disabled="true">Sold out</span>` : item.price == null ? `<span class="button button-small" aria-label="Not yet available">Coming soon</span>` : `<button class="button button-small" data-add="${item.id}">Add to cart</button>`}
         </div>
-        ${item.category === "Candles" ? `<p class="fine-print" style="margin-top:0.5rem"><a href="/shop/#subscription">or subscribe from $22/mo, free shipping →</a></p>` : ""}
+        ${item.category === "Candles" ? `<p class="subscribe-link"><a href="/shop/#subscription">or subscribe from $22/mo, free shipping →</a></p>` : ""}
       </div>
     </article>`;
   }
@@ -256,7 +256,7 @@
           <select data-sub-wick>${wickOptions}</select></label>
       </fieldset>`;
     host.innerHTML = `
-      <div class="checkout-panel">
+      <div class="checkout-panel subscription-panel">
         <h2>Candle Subscription</h2>
         <p>A candle (or two) every month, with free shipping. Billed monthly — cancel anytime by contacting us.</p>
         <form data-sub-form>

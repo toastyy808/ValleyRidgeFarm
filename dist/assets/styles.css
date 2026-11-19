@@ -284,3 +284,9 @@ body.has-cart-dock { padding-bottom: 5.5rem; }
   .menu-toggle { padding: .5rem .25rem; }
   .cart-dock { width: calc(100% - 1.5rem); justify-content: space-between; gap: .5rem; padding: .75rem 1rem; }
 }
+
+/* Candle subscription: warm tinted panel so the form stands out from the page,
+   and a visible subscribe link on the candle cards. */
+.subscription-panel { background: #fff3e4; border: 1px solid #e1c9b0; }
+.subscribe-link { margin-top: .5rem; }
+.subscribe-link a { color: var(--clay); font-weight: 700; text-decoration: underline; text-underline-offset: 3px; }
